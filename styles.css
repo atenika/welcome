@@ -1,0 +1,89 @@
+body {
+  margin: 0;
+  padding: 20px;
+
+  font-family: 'Courier New', monospace;
+  font-size: 18px;
+  background-color: #112942;
+  color: hsl(220.8, 53.2%, 90.8%);
+
+
+
+
+
+}
+
+h1, h2, label {
+  color: #f4d03f;
+}
+
+button {
+  background-color: #f1c40f;
+  border: none;
+  padding: 10px 20px;
+  color: black;
+  font-weight: bold;
+  margin: 10px 0;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+button:hover {
+  background-color: #f7dc6f;
+}
+
+input, select {
+  margin: 5px 0;
+  padding: 6px 10px;
+  width: 100%;
+  background-color: #333;
+  color: #f9e79f;
+  border: 1px solid #555;
+  border-radius: 4px;
+}
+
+#messageBox {
+  background-color: #0d0d0d;
+  color: #22d8ff;
+
+  padding: 20px;
+  white-space: pre-wrap;
+  font-size: 16px;
+  line-height: 1.5;
+  min-height: 300px;
+  margin-bottom: 30px;
+  overflow-y: auto;
+  font-family: monospace;
+  box-shadow: inset 0 0 20px #b3b300;
+  border:13px solid #165f8c;
+}
+
+/* Funkcje kontraktu - kolorowe ramki */
+.view {
+  border-left: 4px solid #3498db;
+  padding-left: 10px;
+  margin-bottom: 20px;
+}
+
+.payable {
+  border-left: 4px solid gold;
+  padding-left: 10px;
+  margin-bottom: 20px;
+}
+
+.nonpayable {
+  border-left: 4px solid orange;
+  padding-left: 10px;
+  margin-bottom: 20px;
+}
+
+/* Kursor retro (opcjonalnie) */
+#messageBox::after {
+  content: '█';
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}

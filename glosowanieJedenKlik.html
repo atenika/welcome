@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <title>Atenika 1 klik rejestracja i głosowanie </title>
+  <script src="ethers.umd.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    input, select, button { margin: 10px 0; padding: 8px; width: 100%; }
+    .container { max-width: 600px; margin: auto; }
+  </style>
+  <link rel="stylesheet" href="console-style-index.css" />
+</head>
+<body>
+ <h2> Atenika pytania na start </h2>
+<h2> Prosimy zapoznaj się z treścią pytania. Głosując 
+    akceptujesz też regulaminy i politykę prywatności i regulaminy inteligentnych kontraktów (ang. smart contracts) na blockchainie.</h2>
+ <div class="container">
+  <h2>Zaszyfruj PESEL (keccak256) potrzebny do stworzenia unikalnego identyfikatora głosu</h2>
+  <input type="text" id="pesel" placeholder="Wprowadź PESEL, nie opuszcza on tego urządzenia.">
+  <button onclick="encryptPesel()">Zaszyfruj powyżej wpisany PESEL</button>
+  <input type="text" id="hashPesel" placeholder="Hash PESELu" readonly>
+
+  <h2>Wstępna autonomiczna rejestracja i głosowanie</h2>
+  <input type="text" id="imie" placeholder="Imię lub inicjał">
+  <input type="text" id="nazwisko" placeholder="Nazwisko lub inicjał">
+  <select id="kraj">
+    <option value="">Wybierz kraj</option>
+    <option>POLSKA</option>
+  </select>
+  <select id="opcjaGlosowania1">
+    <option value="">Wybierz opcję dla pytania Czy powinna następować zmiana czasu z zimowego na letni i przesunięcie czasu o 1 godzinę?</option>
+    <option value="1">Tak powinna być zachowana zmiana czasu</option>
+    <option value="2">Nie powinniśmy już nie przesuwać czasu.</option>
+    <option value="3">Nie ale powinniśmy jeszcze raz zmienić czas na zimowy.</option>
+</select>
+
+  <select id="opcjaGlosowania2">
+    <option value="">Wybierz opcję dla pytania: Czy nowo budowane przystanki autobusowe / tramwajowe / trolejbusowe  w twojej gminie  powinny być wyposażone w USB-C z możliwością ładowania ? , Zarys historyczny: aktualnie piniądze na zakup biletów albo sam bilet albo dokumenty mamy w aplikacji w telefonie.</option>
+    <option value="1">Tak powinny być budowane w nowoczesnym standardzie wyposażone w zasilanie z modułu zielonej energii lub z sieci miejskiej.</option>
+    <option value="2">Nie budujmy przystanki bez gniazd USB-C czy USB.</option>
+    <option value="3">Zostawmy to władzom gminy do roztrzygnięcia przy każdym przypadku osobno.</option>
+</select>
+  <input type="text" id="linkIpfs" placeholder="LinkIpfs [ opcjonalnie do dokumentu ePuap]">
+   <input type="text" id="discordId" place
+   holder="Nick na discordzie">
+  <button onclick="register()">Zagłosuj wstępnie</button>
+</div>
+
+<footer>
+  <div class="container section-onboarding">
+  <button onclick="window.location.href='https://discord.gg/y6UXwPn4rX'"> <br> DOŁĄCZ TERAZ <br> Nasza Społeczność Zmiany - tu możesz zadawać pytania <br></button>     
+   
+
+  <button onclick="window.location.href='https://atenika.com'"><br> Powrót <br></button>
+ 
+</div>
+
+<script>
+const contractAddressGlosowanie1 = "0xe96f302ab33a3c8531315a1c1ec82a2a01331ac7";
+
+const contractAddressGlosowanie2 = "0x695ce7291946DE4F8cfde1C9747Fe5823eCf5D6f";
+
+
+async function encryptPesel() {
+  const pesel = document.getElementById('pesel').value;
+  const hash = ethers.keccak256(ethers.toUtf8Bytes(pesel));
+  document.getElementById('hashPesel').value = hash;
+}
+
+async function register() {
+  const hashPesel = document.getElementById('hashPesel').value;
+  const imie = document.getElementById('imie').value;
+  const nazwisko = document.getElementById('nazwisko').value;
+  const kraj = document.getElementById('kraj').value;
+  const opcja1 = document.getElementById('opcjaGlosowania1').value;
+  const opcja2 = document.getElementById('opcjaGlosowania2').value;
+  const linkIPFS = document.getElementById('linkIpfs').value;
+  const discordUser = document.getElementById('discordId').value;
+
+  if (!hashPesel || !imie || !nazwisko || !kraj || !opcja1 ) {
+    alert("Wypełnij wymagane pola");
+    return;
+  }
+
+  const wallet = ethers.Wallet.createRandom();
+  const adresEthereum = wallet.address;
+  const kluczPrywatny = wallet.privateKey;
+
+  const daneFormularza = {
+    hashPesel, imie, nazwisko, kraj, opcja1, linkIPFS,discordUser, adresEthereum, kluczPrywatny
+  };
+  const abiBasic = ["function stworzProfilEwolucyjnyENGcreateProfileUpgradeableIUnikalnyGlos(string,string,string,string,string,string,string,string,uint256) external payable returns(address)"];
+  const abi1Glos = ["function unikalnyGlos2(uint256) external payable returns(address)"];
+
+  const iface = new ethers.Interface(abi1Glos);
+  const iface2 = new ethers.Interface(abiBasic);
+
+  let czyJuzZarejestrowany = "Wstępnie Zarejestrowany";
+
+
+  const data = iface2.encodeFunctionData("stworzProfilEwolucyjnyENGcreateProfileUpgradeableIUnikalnyGlos", [
+    hashPesel, kraj, "EUROPE", czyJuzZarejestrowany, imie, nazwisko, linkIPFS,discordUser, parseInt(opcja1)
+  ]);
+  const tx1 = await wallet.signTransaction({ to: contractAddressGlosowanie1, 
+    gasLimit: 2_500_000,
+  maxFeePerGas: ethers.parseUnits("0.01", "gwei"),
+  maxPriorityFeePerGas: ethers.parseUnits("0.005", "gwei"),
+    chainId: 10, data });
+  const tx2 = await wallet.signTransaction({ to: contractAddressGlosowanie, 
+    gasLimit: 2_500_000,
+  maxFeePerGas: ethers.parseUnits("0.01", "gwei"),
+  maxPriorityFeePerGas: ethers.parseUnits("0.005", "gwei"),
+  chainId: 137, data });
+  const tx4 = await wallet.signTransaction({ to: contractAddressGlosowanie, 
+    gasLimit: 2_500_000,
+  maxFeePerGas: ethers.parseUnits("0.01", "gwei"),
+  maxPriorityFeePerGas: ethers.parseUnits("0.005", "gwei"),
+  chainId: 14042025, data });
+  const tx5 = await wallet.signTransaction({ to: contractAddressGlosowanie,
+    gasLimit: 2_500_000,
+  maxFeePerGas: ethers.parseUnits("0.01", "gwei"),
+  maxPriorityFeePerGas: ethers.parseUnits("0.005", "gwei"),
+   chainId: 557777755, data });
+  
+
+ const data3 = iface.encodeFunctionData("unikalnyGlos2", [ parseInt(opcja2) ]);
+
+  const tx3 = await wallet.signTransaction({ to: contractAddressGlosowanie2,
+    gasLimit: 2_500_000,
+  maxFeePerGas: ethers.parseUnits("0.01", "gwei"),
+  maxPriorityFeePerGas: ethers.parseUnits("0.005", "gwei"),
+    chainId: 10, data3 });
+
+  await fetch("wyslij.php", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    adresEthereum: adresEthereum,
+    hashPesel: hashPesel,
+    opcja1: opcja1,
+    opcja2: opcja1,
+    danetx1: tx1,
+    danetx2: tx2,
+    danetx3: tx3,
+    danetx4: tx4,
+    danetx5: tx5,
+  })
+});
+
+
+  const blob = new Blob([JSON.stringify(daneFormularza, null, 2)], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = "dane_rejestracji_zmiensystem_wazne_wydrukuj_klucze_sobie.txt";
+  a.click();
+  URL.revokeObjectURL(url);
+
+  alert("Rejestracja zakończona, dane zostały przesłane, po jakimś czasie, czasem paru dniach pojawiają się na blockchainie, prosimy o cierpliwość.");
+}
+</script>
+
+</body>
+</html>
